@@ -1,7 +1,41 @@
-import flaskr, os 
+# pylint: disable=missing-docstring
 
-app = flaskr.create_app()
+from fastapi import FastAPI, Form, Request
+from fastapi.templating import Jinja2Templates
+from starlette.responses import FileResponse
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+app = FastAPI()
+
+# TODO:
+# CSRF?, CORS
+# 404/500 page
+
+todos = [{"id": 1, "name": "Clean room"}]
+
+templates = Jinja2Templates(directory="templates")
+
+
+@app.get("/favicon.ico")
+async def favicon():
+    return FileResponse("static/favicon.ico")
+
+
+@app.route("/")
+def index(request: Request):
+    return templates.TemplateResponse("pages/index.html", {"request": request})
+
+
+@app.get("/todos")
+def get_todos(request: Request):
+    return templates.TemplateResponse(
+        "bp/todos/todos.html", {"request": request, "todos": todos}
+    )
+
+
+@app.post("/todos/add")
+def add_todo(request: Request, todo: str = Form(...)):
+    num = len(todos) + 1
+    todos.append({"id": num, "name": todo})
+    return templates.TemplateResponse(
+        "bp/todos/todos.html", {"request": request, "todos": todos}
+    )
